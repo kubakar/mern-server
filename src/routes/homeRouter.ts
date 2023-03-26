@@ -1,11 +1,13 @@
 import express, { Router, RequestHandler } from "express";
-const router = Router();
+import { StatusCodes } from "http-status-codes";
+
+const homeRouter = Router();
 
 const homeRoute: RequestHandler = (req, res) => {
   res.send("Welcome!");
 };
 
-router.get("/", homeRoute);
+homeRouter.get("/", homeRoute);
 
 // no route
 export const notFoundMiddleware: express.RequestHandler = (req, res) => {
@@ -19,7 +21,12 @@ export const errorMiddleware: express.ErrorRequestHandler = (
   res,
   next
 ) => {
-  res.status(500).json({ msg: "ERROR!" });
+  console.log(err);
+  const defaultError = {
+    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    msg: "Server Error !!",
+  };
+  res.status(defaultError.statusCode).json({ msg: err });
 };
 
-export default router; // compiled to '.exports' by TS
+export default homeRouter; // compiled to '.exports' by TS

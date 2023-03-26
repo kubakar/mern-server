@@ -1,21 +1,23 @@
 import express, { Request, Response, NextFunction } from "express";
-import router, {
+import homeRouter, {
   notFoundMiddleware,
   errorMiddleware,
-} from "./routes/router.js";
+} from "./routes/homeRouter.js";
 import dotenv from "dotenv";
+import connectDB from "./db/connect.js";
+import authRouter from "./routes/authRouter.js";
+import jobRouter from "./routes/jobRouter.js";
 
 dotenv.config();
 
-console.log(process.env.PORT2);
-
 const app = express();
 
-// app.get("/", (req: express.Request, res: express.Response) => {
-//   res.send("Welcome!");
-// });
+// json middleware
+app.use(express.json());
 
-app.use("/", router);
+app.use("/", homeRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/job", jobRouter);
 
 // no route taken, so there is a 404
 app.use(notFoundMiddleware);
@@ -23,4 +25,15 @@ app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Server is listening on port ${port}`));
+
+const start = async () => {
+  connectDB()
+    .then(() => {
+      app.listen(port, () =>
+        console.log(`Server is listening on port ${port}`)
+      );
+    })
+    .catch((error) => console.log(error));
+};
+
+start();
