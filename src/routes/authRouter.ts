@@ -1,7 +1,8 @@
-import express, { Router, RequestHandler } from "express";
+import { Router, RequestHandler } from "express";
+
 import {
   register,
-  validateRegister,
+  validateUserForm,
   login,
   updateUser,
   getUsers,
@@ -14,8 +15,8 @@ const homeRoute: RequestHandler = (req, res) => {
 
 router.get("/", homeRoute);
 
-router.post("/register", validateRegister, register);
-router.post("/login", login);
+router.post("/register", validateUserForm, register);
+router.post("/login", validateUserForm, login);
 router.patch("/updateUser", updateUser);
 router.get("/getUsers", getUsers);
 

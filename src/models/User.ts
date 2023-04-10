@@ -11,9 +11,15 @@ export interface UserInterface {
   location?: string;
 }
 
+interface UserInterfaceDocument extends UserInterface {
+  _id?: any;
+}
+
 // Put all user instance methods in this interface:
 interface UserInterfaceMethods {
+  test: () => boolean;
   createJWT: () => string;
+  comparePassword: (pass: string) => Promise<boolean>;
 }
 
 // Create a new Model type that knows about UserInterfaceMethods
@@ -75,12 +81,32 @@ UserSchema.pre("save", async function () {
 // UserSchema.methods.createJWT = function () {
 //   console.log(this);
 // };
-UserSchema.method("createJWT", function () {
-  console.log(this);
 
+// https://stackoverflow.com/questions/36311284/is-there-a-way-to-extract-the-type-of-typescript-interface-property
+const test: UserInterfaceMethods["test"] = function (
+  this: UserInterfaceDocument
+) {
+  console.log(this._id);
+  return true;
+};
+
+const createJWT: UserInterfaceMethods["createJWT"] = function (
+  this: UserInterfaceDocument
+) {
+  // _id will be accessible on the user instance
   return jwt.sign({ userId: this._id }, process.env.JWT_SECRET as string, {
     expiresIn: "1d",
   });
-});
+};
+
+const comparePassword: UserInterfaceMethods["comparePassword"] =
+  async function (this: UserInterfaceDocument, inputPassword) {
+    const isMatch = await bcrypt.compare(inputPassword, this.password);
+    return isMatch;
+  };
+
+UserSchema.method("test", test);
+UserSchema.method("createJWT", createJWT);
+UserSchema.method("comparePassword", comparePassword);
 
 export default model<UserInterface, UserModel>("User", UserSchema); // 'UserModel' is passed to have methods in the instance
