@@ -11,6 +11,7 @@ import homeRouter, {
 } from "./routes/homeRouter.js";
 import authRouter from "./routes/authRouter.js";
 import jobRouter from "./routes/jobRouter.js";
+import { authenticate } from "./controllers/authController.js";
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use("/", homeRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/job", jobRouter);
+app.use("/api/job", authenticate, jobRouter); // middleware applied to all subroutes
 
 // no route taken, so there is a 404
 app.use(notFoundMiddleware);

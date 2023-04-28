@@ -1,9 +1,11 @@
 import { NextFunction, RequestHandler } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 import User, { UserInterface } from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
 import { CustomAPIError } from "./error.js";
 
+// middlewares
 export const validateUserForm: RequestHandler = (req, res, next) => {
   // const body: UserInterface = req.body;
   const { email, password } = req.body;
@@ -18,12 +20,41 @@ export const validateUserForm: RequestHandler = (req, res, next) => {
   next();
 };
 
+type customJwtPayload = {
+  userId: string;
+};
+
+export const authenticate: RequestHandler = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
+
+  if (!authHeader || !authHeader.startsWith("Bearer"))
+    throw new CustomAPIError(
+      "Auth. Invalid (no token!)",
+      StatusCodes.UNAUTHORIZED
+    );
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string); // this method throws error when token invalid
+    req.user = { userId: (payload as customJwtPayload).userId }; // attach 'user' to middleware in this middleware (into next)
+    next();
+  } catch (error) {
+    throw new CustomAPIError(
+      "Auth. Invalid (bad token!)",
+      StatusCodes.UNAUTHORIZED
+    );
+  }
+};
+
+// controllers
 export const register: RequestHandler<{}, {}, UserInterface> = async (
   req,
   res,
   next
 ) => {
-  const { body } = req; // type assigned with 'RequestHandler' generic
+  const { body } = req; // type assigned with 'RequestHandler' generic (UserInterface)
 
   try {
     const user = await User.create(body);
@@ -75,6 +106,7 @@ export const login: RequestHandler = async (req, res, next) => {
 };
 
 export const updateUser: RequestHandler = async (req, res) => {
+  console.log(req.user); // user is already passed here
   res.send("updateUser");
 };
 
