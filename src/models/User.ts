@@ -69,9 +69,13 @@ const UserSchema = new Schema<UserInterface, UserModel>({
 // 'save' is not triggered but every method! (eg. 'findOneAndUpate' will not trigger that hook)
 // is triggered on .create() method
 UserSchema.pre("save", async function () {
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt); // password hashing
+  console.log(this.modifiedPaths()); // see all modified (user) fields
 
+  // trigger this only when password is given!
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt); // password hashing
+  }
   // Store hash in your password DB ??
 });
 

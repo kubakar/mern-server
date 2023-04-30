@@ -1,0 +1,46 @@
+import express, { Router, RequestHandler } from "express";
+import { StatusCodes } from "http-status-codes";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { CustomAPIError } from "../utils/error.js";
+
+type customJwtPayload = {
+  userId: string;
+};
+
+export const validateUserForm: RequestHandler = (req, res, next) => {
+  // const body: UserInterface = req.body;
+  const { email, password } = req.body;
+
+  // controller validation (prior to DB validation) for both login & register
+  if (!email || !password)
+    throw new CustomAPIError(
+      "Please provide all values (server)", // throw custom error
+      StatusCodes.BAD_REQUEST
+    );
+
+  next();
+};
+
+export const authenticate: RequestHandler = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
+
+  if (!authHeader || !authHeader.startsWith("Bearer"))
+    throw new CustomAPIError(
+      "Auth. Invalid (no token!)",
+      StatusCodes.UNAUTHORIZED
+    );
+
+  const token = authHeader.split(" ")[1]; // Bearer [token]
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string); // this method throws error when token invalid
+    req.user = { userId: (payload as customJwtPayload).userId }; // attach 'user' to middleware in this middleware (into next)
+    next();
+  } catch (error) {
+    throw new CustomAPIError(
+      "Auth. Invalid (bad token!)",
+      StatusCodes.UNAUTHORIZED
+    );
+  }
+};

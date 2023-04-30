@@ -2,12 +2,11 @@ import { Router, RequestHandler } from "express";
 
 import {
   register,
-  validateUserForm,
   login,
   updateUser,
   getUsers,
-  authenticate,
 } from "../controllers/authController.js";
+import { authenticate, validateUserForm } from "../middleware/auth.js";
 const router = Router();
 
 const homeRoute: RequestHandler = (req, res) => {

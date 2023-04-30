@@ -1,52 +1,8 @@
 import { NextFunction, RequestHandler } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
 
 import User, { UserInterface } from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
-import { CustomAPIError } from "./error.js";
-
-// middlewares
-export const validateUserForm: RequestHandler = (req, res, next) => {
-  // const body: UserInterface = req.body;
-  const { email, password } = req.body;
-
-  // controller validation (prior to DB validation) for both login & register
-  if (!email || !password)
-    throw new CustomAPIError(
-      "Please provide all values (server)", // throw custom error
-      StatusCodes.BAD_REQUEST
-    );
-
-  next();
-};
-
-type customJwtPayload = {
-  userId: string;
-};
-
-export const authenticate: RequestHandler = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  console.log(authHeader);
-
-  if (!authHeader || !authHeader.startsWith("Bearer"))
-    throw new CustomAPIError(
-      "Auth. Invalid (no token!)",
-      StatusCodes.UNAUTHORIZED
-    );
-
-  const token = authHeader.split(" ")[1];
-
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string); // this method throws error when token invalid
-    req.user = { userId: (payload as customJwtPayload).userId }; // attach 'user' to middleware in this middleware (into next)
-    next();
-  } catch (error) {
-    throw new CustomAPIError(
-      "Auth. Invalid (bad token!)",
-      StatusCodes.UNAUTHORIZED
-    );
-  }
-};
+import { CustomAPIError } from "../utils/error.js";
 
 // controllers
 export const register: RequestHandler<{}, {}, UserInterface> = async (
@@ -105,9 +61,41 @@ export const login: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const updateUser: RequestHandler = async (req, res) => {
-  console.log(req.user); // user is already passed here
-  res.send("updateUser");
+export const updateUser: RequestHandler<{}, {}, UserInterface> = async (
+  req,
+  res,
+  next
+) => {
+  console.log(req.user); // user is already appended at this point
+
+  const { email, name, lastName, location } = req.body;
+
+  try {
+    const user = await User.findOne({ _id: req.user.userId });
+
+    if (!user)
+      throw new CustomAPIError(
+        "Invalid Credentials (no such user / updating)", // throw custom error
+        StatusCodes.UNAUTHORIZED
+      );
+
+    user.email = email;
+    user.name = name;
+    user.lastName = lastName || "Def. Surname (new)";
+    user.location = location || "My city (new)";
+
+    // save to DB
+    await user.save();
+
+    // this not mandatory (only ID is signed in JWT) but now we will re-generate the token including expiration
+    const token = user.createJWT(); // setup the token
+    res.status(StatusCodes.OK).json({
+      user,
+      token,
+    });
+  } catch (e) {
+    next(e);
+  }
 };
 
 export const getUsers: RequestHandler = async (req, res, next) => {

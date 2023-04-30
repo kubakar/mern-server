@@ -5,13 +5,12 @@ import morgan from "morgan";
 
 import connectDB from "./db/connect.js";
 
-import homeRouter, {
-  notFoundMiddleware,
-  errorMiddleware,
-} from "./routes/homeRouter.js";
+import homeRouter from "./routes/homeRouter.js";
+
 import authRouter from "./routes/authRouter.js";
 import jobRouter from "./routes/jobRouter.js";
-import { authenticate } from "./controllers/authController.js";
+import { errorMiddleware, notFoundMiddleware } from "./middleware/main.js";
+import { authenticate } from "./middleware/auth.js";
 
 dotenv.config();
 
