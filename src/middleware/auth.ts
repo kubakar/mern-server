@@ -2,9 +2,10 @@ import express, { Router, RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { CustomAPIError } from "../utils/error.js";
+import { Types } from "mongoose";
 
 type customJwtPayload = {
-  userId: string;
+  userId: Types.ObjectId;
 };
 
 export const validateUserForm: RequestHandler = (req, res, next) => {
@@ -14,7 +15,7 @@ export const validateUserForm: RequestHandler = (req, res, next) => {
   // controller validation (prior to DB validation) for both login & register
   if (!email || !password)
     throw new CustomAPIError(
-      "Please provide all values (server)", // throw custom error
+      "Please provide all values (user)", // throw custom error
       StatusCodes.BAD_REQUEST
     );
 
@@ -35,7 +36,11 @@ export const authenticate: RequestHandler = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET as string); // this method throws error when token invalid
-    req.user = { userId: (payload as customJwtPayload).userId }; // attach 'user' to middleware in this middleware (into next)
+
+    // attach 'user' to middleware in this middleware (into next)
+    req.user = { userId: (payload as customJwtPayload).userId };
+    // will be used in all other calls
+
     next();
   } catch (error) {
     throw new CustomAPIError(
