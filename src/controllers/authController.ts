@@ -1,11 +1,11 @@
-import { NextFunction, RequestHandler } from "express";
+import { RequestHandler } from "express";
 
 import User, { UserInterface } from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
 import { CustomAPIError } from "../utils/error.js";
 
 // controllers
-export const register: RequestHandler<{}, {}, UserInterface> = async (
+export const register: RequestHandler<object, object, UserInterface> = async (
   req,
   res,
   next
@@ -61,7 +61,7 @@ export const login: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const updateUser: RequestHandler<{}, {}, UserInterface> = async (
+export const updateUser: RequestHandler<object, object, UserInterface> = async (
   req,
   res,
   next

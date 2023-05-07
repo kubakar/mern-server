@@ -1,4 +1,4 @@
-import express, { RequestHandler } from "express";
+import { RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { CustomAPIError } from "../utils/error.js";
 

@@ -1,12 +1,12 @@
-import mongoose, { Schema, model, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 // Document interface
 export interface JobInterface {
   company: string;
   position: string;
   status: string;
-  jobType: string;
-  jobLocation: string;
+  type: string;
+  location: string;
   createdBy: Types.ObjectId;
 }
 
@@ -28,14 +28,14 @@ const schema = new Schema<JobInterface>(
       enum: ["interview", "declined", "pending"],
       default: "pending",
     },
-    jobType: {
+    type: {
       type: String,
       enum: ["full-time", "part-time", "remote", "internship"],
       default: "full-time",
     },
-    jobLocation: {
+    location: {
       type: String,
-      default: "My city",
+      default: "My city2",
       required: true,
     },
     createdBy: {

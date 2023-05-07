@@ -1,4 +1,4 @@
-import mongoose, { Model, Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -23,7 +23,7 @@ interface UserInterfaceMethods {
 }
 
 // Create a new Model type that knows about UserInterfaceMethods
-type UserModel = Model<UserInterface, {}, UserInterfaceMethods>;
+type UserModel = Model<UserInterface, object, UserInterfaceMethods>;
 
 const UserSchema = new Schema<UserInterface, UserModel>({
   name: {

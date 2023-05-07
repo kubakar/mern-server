@@ -1,4 +1,4 @@
-import express, { Router, RequestHandler } from "express";
+import { Router } from "express";
 import {
   createJob,
   deleteJob,
@@ -15,6 +15,6 @@ router.route("/").post(validateJobsForm, createJob).get(getAllJobs);
 // has to be place before :id
 router.get("/stats", showStats);
 
-router.route("/:id").delete(deleteJob).patch(updateJob);
+router.route("/:id").delete(deleteJob).patch(validateJobsForm, updateJob);
 
 export default router; // compiled to '.exports' by TS
