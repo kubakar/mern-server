@@ -4,9 +4,7 @@
 
 #### Models
 
-#### Error Handlers
-
-#### Bcrypt
+...
 
 ```json
 {
