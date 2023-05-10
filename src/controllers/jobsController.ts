@@ -41,6 +41,8 @@ export const deleteJob: RequestHandler<
 > = async (req, res, next) => {
   const { id: jobId } = req.params;
 
+  console.log(jobId);
+
   try {
     const job = await Job.findOne({ _id: jobId });
 
@@ -90,7 +92,7 @@ export const updateJob: RequestHandler<
 
     // ALTERNATIVE : Job.findOne() => assign new values/data => await job.save()
 
-    res.status(StatusCodes.OK).json({ updatedJob });
+    res.status(StatusCodes.OK).json({ ...updatedJob?.toObject() });
   } catch (e) {
     next(e);
   }
