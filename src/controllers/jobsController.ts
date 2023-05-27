@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import Job, { JobInterface } from "../models/Job.js";
 import { StatusCodes } from "http-status-codes";
-import { Types } from "mongoose";
+import { Aggregate, Types } from "mongoose";
 import { CustomAPIError } from "../utils/error.js";
 import { checkPermission } from "../utils/auxMethods.js";
 
@@ -20,9 +20,42 @@ export const createJob: RequestHandler<object, object, JobInterface> = async (
   }
 };
 
-export const getAllJobs: RequestHandler = async (req, res, next) => {
+type SortType = "latest" | "oldest" | "az" | "za";
+
+export const getAllJobs: RequestHandler<
+  object,
+  object,
+  object,
+  {
+    status?: string;
+    search?: string;
+    type?: string;
+    sort?: SortType;
+  }
+> = async (req, res, next) => {
+  const { status, search, type, sort } = req.query;
+
+  const queryObject = {
+    createdBy: req.user.userId,
+    ...(status && { status }), // optional query params
+    ...(type && { type }),
+    ...(search && { position: { $regex: search, $options: "i" } }), // case insensitive regex
+  };
+
   try {
-    const jobs = await Job.find({ createdBy: req.user.userId });
+    const results = Job.find(queryObject); // no AWAIT here
+
+    // https://mongoosejs.com/docs/api/query.html#Query.prototype.sort()
+    // sorting
+
+    const sortStruct: Record<SortType, string> = {
+      latest: "-createdAt",
+      oldest: "createdAt",
+      az: "position",
+      za: "-position",
+    };
+
+    const jobs = await (sort ? results.sort(sortStruct[sort]) : results); // work more on query if sorting applied and await
 
     // const jobs = await Job.find({ createdBy: req.user.userId }).populate(
     //   "createdBy"
@@ -98,6 +131,63 @@ export const updateJob: RequestHandler<
   }
 };
 
-export const showStats: RequestHandler = async (req, res) => {
-  res.send("showStats");
+export const showStats: RequestHandler = async (req, res, next) => {
+  try {
+    const rawStats: {
+      _id: string;
+      count: number;
+    }[] = await Job.aggregate([
+      // Mongoose "autocasts" string values for ObjectId into their correct type in regular queries, but this does not happen in the aggregation pipeline
+      { $match: { createdBy: new Types.ObjectId(req.user.userId) } }, // basic filter
+      { $group: { _id: "$status", count: { $sum: 1 } } }, // enable sum
+    ]);
+
+    const stats = rawStats.reduce(
+      (acc, current) => {
+        const { _id: key, count } = current;
+        acc[key as keyof typeof acc] = count;
+        return acc;
+      },
+      {
+        pending: 0,
+        interview: 0,
+        declined: 0,
+      }
+    );
+
+    const rawMonthlyApplications: {
+      _id: { year: number; month: number };
+      count: number;
+    }[] = await Job.aggregate([
+      { $match: { createdBy: new Types.ObjectId(req.user.userId) } },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" }, // mongo's get year of date
+            year: { $year: "$createdAt" }, // mongo's get month of date
+          }, // group by month & year
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": -1, // year
+          "_id.month": -1, // month
+        }, // start from newest
+      },
+    ]);
+
+    const monthlyApplications = rawMonthlyApplications.map((a) => {
+      const {
+        _id: { year, month },
+        count,
+      } = a; // a = {_id: {}, count: number}
+
+      return { count: count, date: [month, year] };
+    });
+
+    res.status(StatusCodes.OK).json({ stats, monthlyApplications });
+  } catch (e) {
+    next(e);
+  }
 };
