@@ -16,6 +16,7 @@ export const register: RequestHandler<object, object, UserInterface> = async (
     const user = await User.create(body);
 
     // do not send token in register - individual approach
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: pass, ...partialUser } = user.toObject(); // do not send password
 
     res.status(StatusCodes.CREATED).json({
@@ -47,8 +48,9 @@ export const login: RequestHandler = async (req, res, next) => {
       );
 
     // 'toObject()' is necessary in order to get only keys (not Document object)
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: pass, ...partialUser } = user.toObject(); // do not send password
-    console.log(partialUser);
 
     const token = user.createJWT(); // setup the token
 

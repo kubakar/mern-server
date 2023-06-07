@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import Job, { JobInterface } from "../models/Job.js";
 import { StatusCodes } from "http-status-codes";
-import { Aggregate, Types } from "mongoose";
+import { Types } from "mongoose";
 import { CustomAPIError } from "../utils/error.js";
 import { checkPermission } from "../utils/auxMethods.js";
 
@@ -31,9 +31,11 @@ export const getAllJobs: RequestHandler<
     search?: string;
     type?: string;
     sort?: SortType;
+    page?: number;
+    limit?: number;
   }
 > = async (req, res, next) => {
-  const { status, search, type, sort } = req.query;
+  const { status, search, type, sort, limit, page } = req.query;
 
   const queryObject = {
     createdBy: req.user.userId,
@@ -55,13 +57,26 @@ export const getAllJobs: RequestHandler<
       za: "-position",
     };
 
+    // pagination is achieved with 'limit' & 'skip'
+    const dbLimit = Number(limit) || 10;
+
+    const dbPage = Number(page) || 1;
+    const dbSkip = (dbPage - 1) * dbLimit; // used by mongoose
+
+    results.skip(dbSkip).limit(dbLimit); // still no AWAIT here
+
+    // final response
     const jobs = await (sort ? results.sort(sortStruct[sort]) : results); // work more on query if sorting applied and await
+
+    // add total jobs & amount of pages
+    const totalJobs = await Job.countDocuments(queryObject); // similar to SQL's SELECT CALC ROWS ...
+    const pages = Math.ceil(totalJobs / dbLimit);
 
     // const jobs = await Job.find({ createdBy: req.user.userId }).populate(
     //   "createdBy"
     // ); // JOIN user data
 
-    res.status(StatusCodes.OK).json({ jobs, count: jobs.length, pages: 1 });
+    res.status(StatusCodes.OK).json({ jobs, count: totalJobs, pages });
   } catch (e) {
     next(e);
   }

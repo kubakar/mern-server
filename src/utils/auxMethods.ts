@@ -12,8 +12,6 @@ export const checkPermission = (
     requestUser.userId.toString() + " <=> " + resourceUserId.toString()
   );
 
-  //   if (requestUser.role === 'admin') return; // admin can do all
-
   if (requestUser.userId.toString() === resourceUserId.toString()) return;
 
   throw new CustomAPIError(

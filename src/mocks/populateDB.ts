@@ -22,7 +22,6 @@ try {
   const jobs = JSON.parse(jsonJobs.toString());
 
   await Job.create(jobs); // array can be passed
-  // console.log(jobs);
   console.log("DONE");
 
   process.exit(0);

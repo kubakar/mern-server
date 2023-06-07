@@ -1,4 +1,4 @@
-import express, { Router, RequestHandler } from "express";
+import { Router, RequestHandler } from "express";
 
 const homeRouter = Router();
 
