@@ -1,4 +1,4 @@
-import { Model, Schema, model } from "mongoose";
+import { Model, Schema, model, Types } from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -12,7 +12,7 @@ export interface UserInterface {
 }
 
 interface UserInterfaceDocument extends UserInterface {
-  _id?: any;
+  _id?: Types.ObjectId;
 }
 
 // Put all user instance methods in this interface:
