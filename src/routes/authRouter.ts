@@ -6,6 +6,7 @@ import {
   login,
   updateUser,
   getUsers,
+  logout,
 } from "../controllers/authController.js";
 import { authenticate, validateUserForm } from "../middleware/auth.js";
 
@@ -27,6 +28,8 @@ router.get("/", homeRoute);
 router.post("/register", apiLimiter, validateUserForm, register);
 router.post("/login", apiLimiter, validateUserForm, login);
 router.patch("/updateUser", authenticate, updateUser);
+// logout (expire cookie)
+router.get("/logout", logout);
 // extra
 router.get("/getUsers", getUsers);
 

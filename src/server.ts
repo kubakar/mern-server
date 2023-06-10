@@ -4,6 +4,8 @@ import "dotenv/config";
 
 import morgan from "morgan";
 
+import cookieParser from "cookie-parser";
+
 // handle static files + client app
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -31,6 +33,8 @@ app.use(helmet());
 
 // json middleware
 app.use(express.json());
+// cookie middleware
+app.use(cookieParser());
 
 // handle static files + client app
 // extra code in order to handle ES6 modules

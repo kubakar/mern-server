@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import User, { UserInterface } from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
 import { CustomAPIError } from "../utils/error.js";
+import { attachCookie } from "../utils/auxMethods.js";
 
 // controllers
 export const register: RequestHandler<object, object, UserInterface> = async (
@@ -54,13 +55,28 @@ export const login: RequestHandler = async (req, res, next) => {
 
     const token = user.createJWT(); // setup the token
 
+    // auth with 'cookies'
+    attachCookie(res, token);
+
     res.status(StatusCodes.OK).json({
       user: partialUser,
-      token,
+      // token, // removed now
+      tokenSent: true,
     });
   } catch (e) {
     next(e);
   }
+};
+
+// when token is passed via cookie, it's important to kill/expire that cookie when logging out
+export const logout: RequestHandler = async (req, res) => {
+  res.cookie("token", "LOGOUT", {
+    httpOnly: true,
+    expires: new Date(Date.now() + 1000), // + 1s
+  });
+
+  console.log("SERVER LOGOUT OK");
+  res.status(StatusCodes.OK).json({ msg: "User logged out!" });
 };
 
 export const updateUser: RequestHandler<object, object, UserInterface> = async (
@@ -91,9 +107,14 @@ export const updateUser: RequestHandler<object, object, UserInterface> = async (
 
     // this not mandatory (only ID is signed in JWT) but now we will re-generate the token including expiration
     const token = user.createJWT(); // setup the token
+
+    // auth with 'cookies'
+    attachCookie(res, token);
+
     res.status(StatusCodes.OK).json({
       user,
-      token,
+      // token, // removed now
+      tokenSent: true,
     });
   } catch (e) {
     next(e);
